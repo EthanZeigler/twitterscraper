@@ -91,7 +91,7 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60, r
         proxy = next(proxy_pool)
         logger.info('Using proxy {}'.format(proxy))
         response = requests.get(url, headers=HEADER, proxies={"http": proxy}, timeout=timeout)
-        if response.status == 429:
+        if response.status_code == 429:
             # Rate limit error. Give the process some time to rest and try again
             logger.info('Rate limit hit: taking a {.3g} minute break'.format(rate_limit_cooldown/60))
             time.sleep(rate_limitt_cooldown)
