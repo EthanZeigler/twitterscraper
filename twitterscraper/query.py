@@ -4,6 +4,7 @@ import json
 import requests
 import urllib
 import random
+import time
 import datetime as dt
 
 from functools import partial
@@ -73,7 +74,7 @@ def linspace(start, stop, n):
 proxies = get_proxies()
 proxy_pool = cycle(proxies)
 
-def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
+def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60, rate_limit_cooldown=300):
     """
     Returns tweets from the given URL.
 
@@ -90,7 +91,14 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
         proxy = next(proxy_pool)
         logger.info('Using proxy {}'.format(proxy))
         response = requests.get(url, headers=HEADER, proxies={"http": proxy}, timeout=timeout)
-        if pos is None:  # html response
+	if response.status == 429:
+	    # Rate limit error. Give the process some time to rest and try again
+	    logger.info('Rate limit hit: taking a {.3g} minute break'.format(rate_limit_cooldown/60))
+	    time.sleep(rate_limitt_cooldown)
+            return query_single_page(query, lang, pos, retry - 1, from_user)
+        response.raise_for_status()
+        
+	if pos is None:  # html response
             html = response.text or ''
             json_resp = None
         else:
